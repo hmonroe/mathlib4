@@ -669,9 +669,8 @@ private lemma addX_of_Xne_div_addZ_of_Xne_of_Yne {P Q : PointRep F} (hP : W.nons
   rw [W.add_of_Yne hPz hQz hx hy]
   simp only [mul_comm P.z, ne_eq, ← div_eq_div_iff hPz hQz] at hx hy
   rw [Affine.slope_of_Yne hx <| (negY_divZ hQz).symm ▸ hy, ← hx, ← negY_divZ hPz]
-  sorry
-  -- field_simp
-  -- ring1
+  field_simp
+  ring1
 
 private lemma addX_of_Xne_div_addZ_of_Xne_of_Xne {P Q : PointRep F} (hPz : P.z ≠ 0) (hQz : Q.z ≠ 0)
     (hx : P.x * Q.z ≠ P.z * Q.x) : (W.add P Q).x / (W.add P Q).z =
@@ -680,9 +679,8 @@ private lemma addX_of_Xne_div_addZ_of_Xne_of_Xne {P Q : PointRep F} (hPz : P.z �
   have : P.x * Q.z - P.z * Q.x ≠ 0 := sub_ne_zero_of_ne hx
   rw [W.add_of_Xne hPz hQz hx,
     Affine.slope_of_Xne <| by rwa [ne_eq, div_eq_div_iff hPz hQz, mul_comm Q.x]]
-  sorry
-  -- field_simp
-  -- ring1
+  field_simp
+  ring1
 
 private lemma addY_of_Xne_div_addZ_of_Xne_of_Yne {P Q : PointRep F} (hP : W.nonsingular P)
     (hQ : W.nonsingular Q) (hPz : P.z ≠ 0) (hQz : Q.z ≠ 0) (hx : P.x * Q.z = P.z * Q.x)
@@ -693,9 +691,8 @@ private lemma addY_of_Xne_div_addZ_of_Xne_of_Yne {P Q : PointRep F} (hP : W.nons
   rw [W.add_of_Yne hPz hQz hx hy]
   simp only [mul_comm P.z, ne_eq, ← div_eq_div_iff hPz hQz] at hx hy
   rw [Affine.slope_of_Yne hx <| (negY_divZ hQz).symm ▸ hy, ← hx, ← negY_divZ hPz]
-  sorry
-  -- field_simp
-  -- ring1
+  field_simp
+  ring1
 
 private lemma addY_of_Xne_div_addZ_of_Xne_of_Xne {P Q : PointRep F} (hPz : P.z ≠ 0) (hQz : Q.z ≠ 0)
     (hx : P.x * Q.z ≠ P.z * Q.x) : (W.add P Q).y / (W.add P Q).z =
@@ -704,9 +701,8 @@ private lemma addY_of_Xne_div_addZ_of_Xne_of_Xne {P Q : PointRep F} (hPz : P.z �
   have : P.x * Q.z - P.z * Q.x ≠ 0 := sub_ne_zero_of_ne hx
   rw [W.add_of_Xne hPz hQz hx,
     Affine.slope_of_Xne <| by rwa [ne_eq, div_eq_div_iff hPz hQz, mul_comm Q.x]]
-  sorry
-  -- field_simp
-  -- ring1
+  field_simp
+  ring1
 
 private lemma addZ_of_Xne_ne_zero_of_Yne {P Q : PointRep F} (hP : W.nonsingular P)
     (hQ : W.nonsingular Q) (hPz : P.z ≠ 0) (hQz : Q.z ≠ 0) (hx : P.x * Q.z = P.z * Q.x)
