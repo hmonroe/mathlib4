@@ -334,6 +334,9 @@ lemma lapMatrix_ker_basis_aux_spanning :
   unfold lapMatrix_ker_basis_aux
   simp only [mul_ite, mul_one, mul_zero, sum_ite_eq, mem_univ, ConnectedComponent.lift_mk, ite_true]
 
+/-- `lapMatrix_ker_basis G` is a basis of the nullspace indexed by its connected components,
+  the basis is made up of the functions `V → ℝ` which are `1` on the vertices of the given
+  connected component and `0` elsewhere. -/
 noncomputable def lapMatrix_ker_basis :=
     Basis.mk (lapMatrix_ker_basis_aux_linearIndependent G) (lapMatrix_ker_basis_aux_spanning G)
 
