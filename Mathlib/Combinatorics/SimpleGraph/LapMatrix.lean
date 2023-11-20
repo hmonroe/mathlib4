@@ -22,14 +22,15 @@ import Mathlib.LinearAlgebra.Matrix.IsDiag
 /-!
 # Laplacian Matrix
 
-In this file we introduce `foo` and `bar`,
-two main concepts in the theory of xyzzyology.
+This module defines the Laplacian matrix of a graph, and proves some of its elementary properties.
 
-## Main results
+## Main definitions & Results
 
-- `exists_foo`: the main existence theorem of `foo`s.
-- `bar_of_foo`: a construction of a `bar`, given a `foo`.
-- `bar_eq`    : the main classification theorem of `bar`s.
+* `SimpleGraph.degMatrix`: TODO
+* `SimpleGraph.lapMatrix `: TODO
+* `vec_lapMatrix_vec`: TODO
+* `isPosSemidef_lapMatrix`: TODO
+* `rank_ker_lapMatrix_eq_card_ConnectedComponent`: TODO
 
 -/
 
@@ -38,8 +39,11 @@ open BigOperators Finset Matrix SimpleGraph
 
 variable {V : Type*} [Fintype V] [DecidableEq V] (G : SimpleGraph V) [DecidableRel G.Adj]
 
+/-- The diagonal matrix consisting of the degrees of the vertices in the graph. -/
 def SimpleGraph.degMatrix (R : Type*) [Ring R] : Matrix V V R := Matrix.diagonal (G.degree ·)
 
+/-- `lapMatrix G R` is the matrix `L = D - A` where `D`is the degree
+  and `A` the adjacency matrix of `G`. -/
 def SimpleGraph.lapMatrix (R : Type*) [Ring R] : Matrix V V R := G.degMatrix R - G.adjMatrix R
 
 @[simp]
@@ -61,17 +65,17 @@ theorem lapMatrix_mulVec_const_eq_zero : mulVec (G.lapMatrix ℤ) (Function.cons
   unfold diagonal
   simp only [of_apply, sum_ite_eq, mem_univ, ite_true, sub_self]
 
-lemma vec_adjMatrix_vec (x : V → ℝ) :
+theorem vec_adjMatrix_vec (x : V → ℝ) :
     x ⬝ᵥ mulVec (G.adjMatrix ℝ) x = ∑ i : V, ∑ j : V, if G.Adj i j then x i * x j else 0 := by
   unfold dotProduct mulVec dotProduct
   simp [mul_sum]
 
-lemma vec_degMatrix_vec (x : V → ℝ) :
+theorem vec_degMatrix_vec (x : V → ℝ) :
     x ⬝ᵥ mulVec (G.degMatrix ℝ) x = ∑ i : V, G.degree i * x i * x i := by
   unfold dotProduct mulVec degMatrix diagonal dotProduct
   simp only [of_apply, mul_comm, mul_ite, mul_zero, sum_ite_eq, mem_univ, ite_true]
 
-lemma sum_adj_eq_degree (i : V) : (G.degree i : ℝ) = ∑ j : V, if G.Adj i j then 1 else 0 := by
+theorem sum_adj_eq_degree (i : V) : (G.degree i : ℝ) = ∑ j : V, if G.Adj i j then 1 else 0 := by
   have h : (∑ j : V, if G.Adj i j then 1 else 0) = (G.adjMatrix ℝ).mulVec (Function.const V 1) i
   · unfold mulVec dotProduct
     simp only [sum_boole, mem_univ, forall_true_left, adjMatrix_apply,
@@ -79,13 +83,13 @@ lemma sum_adj_eq_degree (i : V) : (G.degree i : ℝ) = ∑ j : V, if G.Adj i j t
   rw [h]
   simp [degree]
 
-lemma ite_sub_distr {α : Type u_1} [NonAssocRing α] (P : Prop) [Decidable P] (a b : α) :
+theorem ite_sub_distr {α : Type u_1} [NonAssocRing α] (P : Prop) [Decidable P] (a b : α) :
     ((if P then a else 0) - if P then b else 0) = if P then a - b else 0 := by
   split
   · rfl
   · rw [sub_self]
 
-lemma ite_add_distr {α : Type u_1} [NonAssocRing α](P : Prop) [Decidable P] (a b : α) :
+theorem ite_add_distr {α : Type u_1} [NonAssocRing α](P : Prop) [Decidable P] (a b : α) :
     ((if P then a else 0) + if P then b else 0) = if P then a + b else 0 := by
   split
   · rfl
@@ -122,6 +126,7 @@ theorem vec_lapMatrix_vec (x : V → ℝ) : toLinearMap₂' (G.lapMatrix ℝ) x 
   ring
   rfl
 
+/-- The Laplacian matrix is positive semidefinite -/
 theorem isPosSemidef_lapMatrix : (G.lapMatrix ℝ).PosSemidef := by
   unfold PosSemidef
   constructor
@@ -141,13 +146,17 @@ theorem isPosSemidef_lapMatrix : (G.lapMatrix ℝ).PosSemidef := by
       · exact zero_le_two
     · rw [zero_div]
 
-noncomputable def sqrt_diag_matrix (A : Matrix V V ℝ) : Matrix V V ℝ :=
+/-- `sqrtDiagMatrix A` is the diagonal matrix consisting of the square root of the diagonal
+  entries of `A`. The square roots of negative entries are set to zero. -/
+noncomputable def sqrtDiagMatrix (A : Matrix V V ℝ) : Matrix V V ℝ :=
     Matrix.diagonal (λ i ↦ Real.sqrt (Matrix.diag A i))
 
-lemma sqrt_diag_matrix_square (A : Matrix V V ℝ) (h : IsDiag A) (h' : ∀ i : V, 0 ≤ A i i) :
-    (sqrt_diag_matrix A).transpose * sqrt_diag_matrix A = A := by
+/-- If `A` is a diagonal matrix with nonnegative entries, `sqrtDiagMatrix A` multiplied
+  by its transpose is `A`.  -/
+theorem sqrt_diag_matrix_square (A : Matrix V V ℝ) (h : IsDiag A) (h' : ∀ i : V, 0 ≤ A i i) :
+    (sqrtDiagMatrix A).transpose * sqrtDiagMatrix A = A := by
   ext i j
-  simp only [sqrt_diag_matrix, diag_apply, diagonal_transpose, mul_apply, ne_eq, diagonal_apply,
+  simp only [sqrtDiagMatrix, diag_apply, diagonal_transpose, mul_apply, ne_eq, diagonal_apply,
     mul_ite, ite_mul, zero_mul, mul_zero, sum_ite_eq', mem_univ, ite_true]
   split_ifs with hij
   · rw [hij, Real.mul_self_sqrt]
@@ -179,49 +188,38 @@ theorem spd_matrix_zero (A : Matrix V V ℝ) (h_psd : PosSemidef A) (x : V → �
       exact h_psd
   · intro h0; rw [h0, LinearMap.zero_apply]
 
-lemma ker_adj_eq2 (x : V → ℝ) :
+theorem ker_adj_eq2 (x : V → ℝ) :
     Matrix.toLinearMap₂' (G.lapMatrix ℝ) x x = 0 ↔ ∀ i j : V, G.Adj i j → x i = x j := by
   apply Iff.intro
   · intro h i j
     by_contra hn
     have hc : toLinearMap₂' (G.lapMatrix ℝ) x x > 0
-    · rw [vec_lapMatrix_vec, sum_div]
+    · rw [vec_lapMatrix_vec]--, sum_div]
+      apply div_pos_iff.mpr; left; constructor
       apply sum_pos'
-      · simp [sum_div]
-        intro i
+      · intro i
+        simp only [mem_univ, forall_true_left]
         apply sum_nonneg'
         intro j
         split_ifs
-        · apply div_nonneg_iff.mpr
-          left
-          constructor
-          · exact sq_nonneg (x i - x j)
-          · exact zero_le_two
-        · rw [zero_div]
+        · exact sq_nonneg (x i - x j);
+        · rfl
       · simp only [mem_univ, true_and]
         use i
-        rw [sum_div]
         apply sum_pos'
         · simp only [mem_univ, forall_true_left]
           intro j
-          apply div_nonneg_iff.mpr
-          left
-          constructor
-          · split
-            · simp only [Real.rpow_two, sq_nonneg]
-            · rfl
-          · exact zero_le_two
+          split_ifs;
+          · exact sq_nonneg (x i - x j)
+          · rfl
         · simp only [mem_univ, true_and]
           use j
           push_neg at hn
           simp only [hn, ite_true, gt_iff_lt, sub_pos]
-          apply div_pos_iff.mpr
-          left
-          constructor
-          · apply sq_pos_of_ne_zero
-            rw [sub_ne_zero]
-            exact hn.2
-          · exact zero_lt_two
+          apply sq_pos_of_ne_zero
+          rw [sub_ne_zero]
+          exact hn.2
+      · exact two_pos
     clear hn i j
     absurd hc
     simp only [h, lt_self_iff_false, not_false_eq_true]
@@ -241,7 +239,7 @@ theorem ker_adj_eq (x : V → ℝ) :
     Matrix.toLinearMap₂' (G.lapMatrix ℝ) x = 0 ↔ ∀ i j : V, G.Adj i j → x i = x j := by
   rw [← spd_matrix_zero (G.lapMatrix ℝ) (isPosSemidef_lapMatrix G), ker_adj_eq2]
 
-lemma ker_reachable_eq2 (x : V → ℝ) : Matrix.toLinearMap₂' (G.lapMatrix ℝ) x x = 0 ↔
+theorem ker_reachable_eq2 (x : V → ℝ) : Matrix.toLinearMap₂' (G.lapMatrix ℝ) x x = 0 ↔
     ∀ i j : V, G.Reachable i j → x i = x j := by
   rw [ker_adj_eq2]
   apply Iff.intro
@@ -268,6 +266,10 @@ theorem ker_reachable_eq (x : V → ℝ) : Matrix.toLinearMap₂' (G.lapMatrix �
 
 variable [DecidableEq G.ConnectedComponent]
 
+/-- Given a connected component `c` of a graph `G`, `lapMatrix_ker_basis_aux c` is the map
+  `V → ℝ` which is `1` on the vertices in `c` and `0` elsewhere.
+  The family of these maps indexed by the connected components of `G` proves to be a basis
+  of the kernel of `lapMatrix G R` -/
 def lapMatrix_ker_basis_aux (c : G.ConnectedComponent) :
     LinearMap.ker (Matrix.toLinearMap₂' (G.lapMatrix ℝ)) :=
   ⟨fun i ↦ if G.connectedComponentMk i = c then 1 else 0, by
@@ -335,6 +337,7 @@ lemma lapMatrix_ker_basis_aux_spanning :
 noncomputable def lapMatrix_ker_basis :=
     Basis.mk (lapMatrix_ker_basis_aux_linearIndependent G) (lapMatrix_ker_basis_aux_spanning G)
 
+/-- The number of connected components in `G` is the dimension of the nullspace its Laplacian -/
 theorem rank_ker_lapMatrix_eq_card_ConnectedComponent : Fintype.card G.ConnectedComponent =
     FiniteDimensional.finrank ℝ (LinearMap.ker (Matrix.toLinearMap₂' (G.lapMatrix ℝ))) := by
   rw [FiniteDimensional.finrank_eq_card_basis (lapMatrix_ker_basis G)]
