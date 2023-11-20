@@ -101,6 +101,10 @@ instance : EquivLike (α ≃ β) α β where
   right_inv := Equiv.right_inv
   coe_injective' e₁ e₂ h₁ h₂ := by cases e₁; cases e₂; congr
 
+instance : NDFunLike (α ≃ β) α β where
+  coe := Equiv.toFun
+  coe_injective' := FunLike.coe_injective
+
 @[simp] theorem coe_fn_mk (f : α → β) (g l r) : (Equiv.mk f g l r : α → β) = f :=
   rfl
 #align equiv.coe_fn_mk Equiv.coe_fn_mk
