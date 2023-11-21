@@ -152,9 +152,9 @@ noncomputable def sqrtDiagMatrix (A : Matrix V V ℝ) : Matrix V V ℝ :=
     Matrix.diagonal (λ i ↦ Real.sqrt (Matrix.diag A i))
 
 /-- If `A` is a diagonal matrix with nonnegative entries, `sqrtDiagMatrix A` multiplied
-  by its transpose is `A`.  -/
+  by its transpose is `A`. -/
 theorem sqrt_diag_matrix_square (A : Matrix V V ℝ) (h : IsDiag A) (h' : ∀ i : V, 0 ≤ A i i) :
-    (sqrtDiagMatrix A).transpose * sqrtDiagMatrix A = A := by
+    (sqrtDiagMatrix A)ᵀ * sqrtDiagMatrix A = A := by
   ext i j
   simp only [sqrtDiagMatrix, diag_apply, diagonal_transpose, mul_apply, ne_eq, diagonal_apply,
     mul_ite, ite_mul, zero_mul, mul_zero, sum_ite_eq', mem_univ, ite_true]
@@ -164,28 +164,37 @@ theorem sqrt_diag_matrix_square (A : Matrix V V ℝ) (h : IsDiag A) (h' : ∀ i 
   · rw [← h]
     exact hij
 
+/-- Docstring TODO -/
+noncomputable def sqrtDiagMatrix_eigenvectorMatrix {A : Matrix V V ℝ} (hA : PosSemidef A) :=
+    (sqrtDiagMatrix (diagonal ((↑) ∘ hA.1.eigenvalues)) * hA.1.eigenvectorMatrixᵀ)
+
+lemma spectral_theorem_psd {A : Matrix V V ℝ} (hA : PosSemidef A) :
+    A = (sqrtDiagMatrix_eigenvectorMatrix hA)ᵀ * (sqrtDiagMatrix_eigenvectorMatrix hA) := by
+  unfold sqrtDiagMatrix_eigenvectorMatrix
+  rw [transpose_mul, transpose_transpose]
+  rw [mul_assoc]
+  conv => rhs; arg 2; rw [← mul_assoc];
+  rw [sqrt_diag_matrix_square, ← conjTranspose_eq_transpose_of_trivial,
+    Matrix.IsHermitian.conjTranspose_eigenvectorMatrix hA.1]
+  · rw [← mul_assoc]
+    simp [Matrix.IsHermitian.spectral_theorem' hA.1]
+    rfl
+  · simp only [isDiag_diagonal]
+  · intro i
+    rw [diagonal_apply_eq]
+    apply PosSemidef.eigenvalues_nonneg
+    exact hA
+
 theorem spd_matrix_zero (A : Matrix V V ℝ) (h_psd : PosSemidef A) (x : V → ℝ) :
     Matrix.toLinearMap₂' A x x = 0 ↔ Matrix.toLinearMap₂' A x = 0 := by
   apply Iff.intro
   · simp only [LinearMap.ext_iff, toLinearMap₂'_apply']
     conv => rhs; intro y; rw [← h_psd.1, conjTranspose_eq_transpose_of_trivial,
                               mulVec_transpose, dotProduct_comm, ←dotProduct_mulVec];
-    simp only [Matrix.IsHermitian.spectral_theorem' h_psd.1, IsROrC.ofReal_real_eq_id,
-               Function.comp.left_id]
-    rw [← sqrt_diag_matrix_square (diagonal (IsHermitian.eigenvalues h_psd.1)),
-        ← Matrix.IsHermitian.conjTranspose_eigenvectorMatrix h_psd.1,
-        conjTranspose_eq_transpose_of_trivial, mul_assoc, mul_assoc, ←mul_assoc,
-        ← Matrix.mulVec_mulVec]
-    · intro h0 y
-      rw [dotProduct_mulVec, ← mulVec_transpose] at h0
-      simp only [transpose_mul, transpose_transpose, dotProduct_self_eq_zero] at h0
-      rw [h0]
-      simp only [mulVec_zero, dotProduct_zero, LinearMap.zero_apply]
-    · simp only [isDiag_diagonal]
-    · intro i
-      rw [diagonal_apply_eq]
-      apply PosSemidef.eigenvalues_nonneg
-      exact h_psd
+    rw [spectral_theorem_psd h_psd, ← Matrix.mulVec_mulVec]
+    intro h0 y
+    rw [dotProduct_mulVec, ← mulVec_transpose, transpose_transpose, dotProduct_self_eq_zero] at h0
+    rw [h0, mulVec_zero, dotProduct_zero, LinearMap.zero_apply]
   · intro h0; rw [h0, LinearMap.zero_apply]
 
 theorem ker_adj_eq2 (x : V → ℝ) :
